@@ -43,6 +43,6 @@ RUN set -ex \
   # clean fetch deps
   && apk del .fetch-deps
 
-CMD ["/bin/bash", "spark-submit"]
+CMD ["/bin/bash"]
 
 
