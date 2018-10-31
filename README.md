@@ -16,7 +16,7 @@ bash-4.4# spark-submit test.py
 
 ## Example usage with Dockerfile
 
-A more maintainable solution is to create a simple Dockerfile which does package installation, copies over your code and let's you run spark-submit
+A more maintainable solution is to create a simple Dockerfile which does package installation, copies over your code and lets you run spark-submit
 
 ```python
 # test_spark.py
@@ -47,3 +47,6 @@ $ docker build . -t my-spark-app
 $ docker run my-spark-app spark-submit test.py
 ```
 
+## Configuration
+
+Change Spark configuration by copying over your own config files to the folder `$SPARK_HOME/conf`
