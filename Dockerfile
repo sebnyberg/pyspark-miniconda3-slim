@@ -1,5 +1,6 @@
 FROM openjdk:8-jdk-alpine
 
+
 ENV HADOOP_VERSION 2.7.3
 ENV HADOOP_HOME /usr/hadoop-$HADOOP_VERSION
 ENV HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
