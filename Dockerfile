@@ -16,7 +16,7 @@ ENV PATH $PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$SPARK_HOME/bin
 
 RUN set -ex \
   # python
-  && apk add --no-cache python3 bash \
+  && apk add --no-cache python3 bash gcc \
   && python3 -m ensurepip \
   && rm -r /usr/lib/python*/ensurepip \
   && pip3 install --upgrade pip setuptools \
@@ -46,5 +46,4 @@ RUN set -ex \
 COPY config ${SPARK_HOME}/conf
 
 CMD ["/bin/bash"]
-
 
