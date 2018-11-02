@@ -57,5 +57,6 @@ RUN set -ex \
 
 COPY config ${SPARK_HOME}/conf
 
-CMD ["/bin/bash"]
+ENTRYPOINT [ "/usr/bin/tini", "--" ] 
+CMD [ "/bin/bash" ]
 
