@@ -1,6 +1,6 @@
-# pyspark-alpine
+# pyspark-miniconda3-slim
 
-Simple Docker build for PySpark + Python3 with Alpine
+Simple Docker build for PySpark + MiniConda3
 
 ## Quick start
 
