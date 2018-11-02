@@ -6,7 +6,7 @@ Simple Docker build for PySpark + MiniConda3
 
 To quickly test the image without a Dockerfile, mount your current directory into the container:
 
-    docker run -it -v $(pwd):/code sebnyberg/pyspark-alpine
+    docker run -it -v $(pwd):/code sebnyberg/pyspark-miniconda3-slim
 
 Run inside the container:
 
