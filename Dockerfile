@@ -14,18 +14,27 @@ ENV PYSPARK_DRIVER_PYTHON=python3
 
 ENV PATH $PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$SPARK_HOME/bin
 
+# Conda envs
+ENV CONDA_DIR=/opt/conda CONDA_VER=4.3.14
+ENV PATH=$CONDA_DIR/bin:$PATH SHELL=/bin/bash LANG=C.UTF-8
+
+# Conda
 RUN set -ex \
-  # python
-  && apk add --no-cache python3 bash gcc \
-  && python3 -m ensurepip \
-  && rm -r /usr/lib/python*/ensurepip \
-  && pip3 install --upgrade pip setuptools \
-  && if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi \
-  && if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi \
-  && rm -r /root/.cache \
-  # fetch deps
-  && apk add --no-cache --virtual .fetch-deps \
-  curl \
+  && apk add --no-cache bash \
+  && apk add --virtual .fetch-deps --no-cache ca-certificates wget curl \
+  \
+  && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
+  && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.28-r0/glibc-2.28-r0.apk \
+  && apk add --virtual .conda-deps glibc-2.28-r0.apk \
+  \
+  && mkdir -p $CONDA_DIR  \
+  && echo export PATH=$CONDA_DIR/bin:'$PATH' > /etc/profile.d/conda.sh \
+  && wget https://repo.continuum.io/miniconda/Miniconda3-${CONDA_VER}-Linux-x86_64.sh -O miniconda.sh \
+  && bash miniconda.sh -f -b -p $CONDA_DIR \
+  && rm miniconda.sh \
+  \
+  && conda update conda \
+  \
   # hadoop
   && curl -sL --retry 3 \
   "http://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz" \
@@ -40,10 +49,11 @@ RUN set -ex \
   | tar x -C /usr/ \
   && mv /usr/$SPARK_PACKAGE $SPARK_HOME \
   && chown -R root:root $SPARK_HOME \
-  # clean fetch deps
-  && apk del .fetch-deps
+  # cleanup
+  && apk del .fetch-deps \
+  # && apk del .conda-deps
 
-COPY config ${SPARK_HOME}/conf
+  COPY config ${SPARK_HOME}/conf
 
 CMD ["/bin/bash"]
 
