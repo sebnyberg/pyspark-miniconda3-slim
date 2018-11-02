@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:8-jre-slim
 
 ENV HADOOP_VERSION 2.7.3
 ENV HADOOP_HOME /usr/hadoop-$HADOOP_VERSION
@@ -12,29 +12,31 @@ ENV SPARK_DIST_CLASSPATH="$HADOOP_HOME/etc/hadoop/*:$HADOOP_HOME/share/hadoop/co
 ENV PYSPARK_PYTHON python3
 ENV PYSPARK_DRIVER_PYTHON=python3
 
-ENV PATH $PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$SPARK_HOME/bin
-
-# Conda envs
-ENV CONDA_DIR=/opt/conda CONDA_VER=4.3.14
-ENV PATH=$CONDA_DIR/bin:$PATH SHELL=/bin/bash LANG=C.UTF-8
+ENV CONDA_DIR=/opt/conda 
+ENV PATH $CONDA_DIR/bin:$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$SPARK_HOME/bin:
 
 # Conda
 RUN set -ex \
-  && apk add --no-cache bash \
-  && apk add --virtual .fetch-deps --no-cache ca-certificates wget curl \
+  && apt-get update && apt-get install -y --no-install-recommends \
+  wget \
+  curl \
+  grep \
+  sed \
+  dpkg \
   \
-  && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
-  && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.28-r0/glibc-2.28-r0.apk \
-  && apk add --virtual .conda-deps glibc-2.28-r0.apk \
+  && wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh -O ~/miniconda.sh \ 
+  && /bin/bash ~/miniconda.sh -b -p /opt/conda  \
+  && rm ~/miniconda.sh \ 
+  && ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh \ 
+  && echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc \
+  && echo "conda activate base" >> ~/.bashrc \ 
   \
-  && mkdir -p $CONDA_DIR  \
-  && echo export PATH=$CONDA_DIR/bin:'$PATH' > /etc/profile.d/conda.sh \
-  && wget https://repo.continuum.io/miniconda/Miniconda3-${CONDA_VER}-Linux-x86_64.sh -O miniconda.sh \
-  && bash miniconda.sh -f -b -p $CONDA_DIR \
-  && rm miniconda.sh \
+  && TINI_VERSION=`curl https://github.com/krallin/tini/releases/latest | grep -o "/v.*\"" | sed 's:^..\(.*\).$:\1:'` \ 
+  && curl -L "https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini_${TINI_VERSION}.deb" > tini.deb \ 
+  && dpkg -i tini.deb \ 
+  && rm tini.deb \
   \
   && conda update conda \
-  \
   # hadoop
   && curl -sL --retry 3 \
   "http://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz" \
@@ -50,10 +52,10 @@ RUN set -ex \
   && mv /usr/$SPARK_PACKAGE $SPARK_HOME \
   && chown -R root:root $SPARK_HOME \
   # cleanup
-  && apk del .fetch-deps \
-  # && apk del .conda-deps
+  && rm -rf /var/lib/apt/lists/* \
+  && apt-get clean
 
-  COPY config ${SPARK_HOME}/conf
+COPY config ${SPARK_HOME}/conf
 
 CMD ["/bin/bash"]
 
